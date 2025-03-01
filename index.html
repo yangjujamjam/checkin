@@ -17,7 +17,7 @@
 <script>
 const params = new URLSearchParams(location.search);
 const room = params.get('room'); // URL에서 객실번호 가져오기
-const apiUrl = 'https://script.google.com/macros/s/AKfycbzvH5R0CXzq58qwOAZYELtAzMTpkDniS1rKGX48NdRV4Lm6wnkt30uS-z821BhSaYc/exec';
+const apiUrl = 'https://script.google.com/macros/s/AKfycbxN_bpvuQHl7vQuDoNIafwLKOazFtjU8x_4QTXtmylHaMK-FBsuoHMwVEH87SpzEPE/exec';
 
 // 상태 조회
 fetch(`${apiUrl}?action=getStatus&room=${room}`)
