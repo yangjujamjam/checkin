@@ -6,40 +6,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 20px;
-  background-color: #f4f6f9;
-  text-align: center;
+  font-family: Arial, sans-serif; margin:0; padding:20px; background-color:#f4f6f9; text-align:center;
 }
 h2 { margin: 20px; color: #333; }
-.container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-}
+.container { display:flex; flex-wrap:wrap; justify-content:center; }
 .room {
-  width: 120px; height: 80px;
-  margin: 8px; 
-  font-size: 0.9rem; font-weight: bold;
-  color: #fff; border-radius: 8px;
-  cursor: pointer; transition: transform 0.2s ease;
-  display: flex; flex-direction: column;
-  justify-content: center; align-items: center;
+  width:120px; height:80px; margin:8px; font-size:0.9rem; font-weight:bold;
+  color:#fff; border-radius:8px; cursor:pointer; transition:transform 0.2s ease;
+  display:flex; flex-direction:column; justify-content:center; align-items:center;
 }
-.room:hover { transform: scale(1.05); }
-.status {
-  font-size: 0.8rem;
-  font-weight: normal;
-  margin-top: 4px;
-}
-.red { background-color: #f44336; }
-.green { background-color: #4caf50; }
-.yellow { background-color: #ffc107; color:#000; }
+.room:hover { transform:scale(1.05); }
+.status { font-size:0.8rem; font-weight:normal; margin-top:4px; }
+.red { background-color:#f44336; }
+.green { background-color:#4caf50; }
+.yellow { background-color:#ffc107; color:#000; }
 
 @media(max-width:600px){
-  .room { width: 45%; height: 60px; font-size: 0.8rem; }
-  .status { font-size: 0.7rem; }
+  .room { width:45%; height:60px; font-size:0.8rem; }
+  .status { font-size:0.7rem; }
 }
 </style>
 </head>
@@ -72,32 +56,28 @@ function createRoomDiv(data){
   let isOccupied = toBool(data.status);
   let isCleaned = toBool(data.cleaned);
   
-  let className = '';
-  let statusText = '';
+  let className = '', statusText = '';
 
-  if(!isOccupied && !isCleaned){ // 퇴실 후 청소필요
-    className = 'yellow';
-    statusText = "청소필요";
-  } else if(isOccupied){ // 입실 상태
-    className = 'red';
-    statusText = "입실 중";
-  } else { // 빈 객실 (청소완료)
-    className = 'green';
-    statusText = "입실가능";
+  if(!isOccupied && !isCleaned){
+    className='yellow'; statusText='청소필요';
+  } else if(isOccupied){
+    className='red'; statusText='입실 중';
+  } else {
+    className='green'; statusText='입실가능';
   }
 
-  const div = document.createElement('div');
-  div.className = 'room ' + className;
-  div.innerHTML = `<div>${data.room}</div><div class='status'>${statusText}</div>`;
+  const div=document.createElement('div');
+  div.className='room '+className;
+  div.innerHTML=`<div>${data.room}</div><div class='status'>${statusText}</div>`;
 
-  div.onclick = ()=>{
-    if(className === 'yellow'){
+  div.onclick=()=>{
+    if(className==='yellow'){
       if(confirm("청소를 완료했습니까?")){
-        jsonp(`${apiUrl}?action=setCleaned&room=${data.room}`, 'handleSetStatus');
+        jsonp(`${apiUrl}?action=setCleaned&room=${data.room}`,'handleSetStatus');
       }
     } else {
-      if(confirm(className === 'red' ? "퇴실처리할까요?" : "입실처리할까요?")){
-        jsonp(`${apiUrl}?action=setStatus&room=${data.room}&status=${!isOccupied}`, 'handleSetStatus');
+      if(confirm(className==='red'?"퇴실처리할까요?":"입실처리할까요?")){
+        jsonp(`${apiUrl}?action=setStatus&room=${data.room}&status=${!isOccupied}`,'handleSetStatus');
       }
     }
   };
@@ -105,34 +85,41 @@ function createRoomDiv(data){
 }
 
 function handleRoomStatus(data){
-  statuses[data.room] = data;
+  statuses[data.room]=data;
   loadedCount++;
-  if(loadedCount === caravanRooms.length + woodRooms.length) renderRooms();
+  if(loadedCount===caravanRooms.length+woodRooms.length)renderRooms();
 }
 
 function handleSetStatus(data){
   alert('상태가 변경되었습니다!');
-  setTimeout(() => location.reload(), 500);
+  setTimeout(()=>loadStatuses(),500);
 }
 
 function renderRooms(){
-  document.getElementById('caravanContainer').innerHTML = '';
-  document.getElementById('woodContainer').innerHTML = '';
+  loadedCount=0;
+  document.getElementById('caravanContainer').innerHTML='';
+  document.getElementById('woodContainer').innerHTML='';
 
-  caravanRooms.forEach(room => {
-    const div = createRoomDiv(statuses[room]);
-    document.getElementById('caravanContainer').appendChild(div);
+  caravanRooms.forEach(room=>{
+    document.getElementById('caravanContainer').appendChild(createRoomDiv(statuses[room]));
   });
-  woodRooms.forEach(room => {
-    const div = createRoomDiv(statuses[room]);
-    document.getElementById('woodContainer').appendChild(div);
+  woodRooms.forEach(room=>{
+    document.getElementById('woodContainer').appendChild(createRoomDiv(statuses[room]));
   });
 }
 
-// 상태 조회 호출
-[...caravanRooms, ...woodRooms].forEach(room=>{
-  jsonp(`${apiUrl}?action=getStatus&room=${room}`,'handleRoomStatus');
-});
+function loadStatuses(){
+  statuses={}; loadedCount=0;
+  [...caravanRooms,...woodRooms].forEach(room=>{
+    jsonp(`${apiUrl}?action=getStatus&room=${room}`,'handleRoomStatus');
+  });
+}
+
+// 최초 로드 시 한번 호출
+loadStatuses();
+
+// 🚩 10초마다 자동 갱신
+setInterval(loadStatuses,10000);
 </script>
 
 </body>
