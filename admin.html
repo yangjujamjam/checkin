@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>객실 관리 페이지</title>
+<style>
+.room {width:150px;height:100px;margin:10px;display:inline-block;color:white;line-height:100px;font-size:20px;cursor:pointer;text-align:center;}
+.red {background-color:red;}
+.green {background-color:green;}
+</style>
+</head>
+<body>
+<div id="rooms"></div>
+
+<script>
+const rooms = ["카라반1","카라반2","카라반3","카라반4","카라반5","카라반6","카라반7","카라반8","카라반9","카라반10","카라반11","카라반12","우드캐빈1","우드캐빈2","우드캐빈3","우드캐빈4","우드캐빈5","우드캐빈6"];
+const apiUrl = 'https://script.google.com/macros/s/AKfycbzvH5R0CXzq58qwOAZYELtAzMTpkDniS1rKGX48NdRV4Lm6wnkt30uS-z821BhSaYc/exec';
+
+function loadStatus(room){
+  fetch(`${apiUrl}?action=getStatus&room=${room}`)
+  .then(res=>res.json())
+  .then(data=>{
+    const status = data.status==="TRUE";
+    const div = document.createElement('div');
+    div.className = 'room ' + (status?'red':'green');
+    div.innerText = room;
+    div.onclick=()=>{
+      if(confirm(status?"퇴실처리 하겠습니까?":"입실처리 하겠습니까?")){
+        fetch(`${apiUrl}?action=setStatus&room=${room}&status=${!status}`)
+        .then(()=>{alert(status?"퇴실처리 되었습니다":"입실처리 되었습니다");location.reload();});
+      }
+    };
+    document.getElementById('rooms').appendChild(div);
+  });
+}
+
+rooms.forEach(loadStatus);
+</script>
+</body>
+</html>
