@@ -2,62 +2,108 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>객실 체크인/아웃</title>
+<title>양주잼잼 체크인</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  body {font-family: Arial;text-align:center;margin-top:50px;}
-  button {padding:10px 20px;margin:10px;font-size:18px;}
+body {
+  font-family: 'Roboto', sans-serif;
+  background: #f5f5f7;
+  margin: 0; padding: 0;
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  height: 100vh; text-align: center;
+  color: #1d1d1f;
+}
+.container {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  padding: 30px;
+  width: 90%; max-width: 400px;
+}
+h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+p {
+  font-size: 1rem;
+  margin-bottom: 25px;
+  color: #6e6e73;
+}
+button {
+  background-color: #0071e3;
+  color: white;
+  border: none; outline: none;
+  padding: 15px;
+  border-radius: 10px;
+  font-size: 1rem; font-weight: 500;
+  cursor: pointer;
+  width: 100%; margin: 8px 0;
+  transition: background-color 0.3s;
+}
+button:hover {
+  background-color: #005bb5;
+}
+button.secondary {
+  background-color: #e8e8ed;
+  color: #1d1d1f;
+}
+button.secondary:hover {
+  background-color: #d2d2d7;
+}
 </style>
 </head>
 <body>
 
-<div id="message">객실 상태 확인 중...</div>
-<button id="yesBtn" style="display:none;">네</button>
-<button id="noBtn" style="display:none;">아니요</button>
+<div class="container">
+  <h1 id="title">객실 상태 확인 중...</h1>
+  <p id="message">잠시만 기다려 주세요.</p>
+  <button id="yesBtn" style="display:none;"></button>
+  <button id="noBtn" class="secondary" style="display:none;">취소</button>
+</div>
 
 <script>
 const params = new URLSearchParams(location.search);
-const room = params.get('room'); 
+const room = params.get('room');
 const apiUrl = 'https://script.google.com/macros/s/AKfycbyrDEZV5uDk8slrVQ_H2fLlcwFCzlWjsY-4DJpBLzl6p8jMFaN1EQrB4rSbmlaC3ysb/exec';
 
-// JSONP 함수
-function jsonp(url, callbackName) {
+function jsonp(url, callback){
   const script = document.createElement('script');
-  script.src = url + '&callback=' + callbackName;
+  script.src = `${url}&callback=${callback}`;
   document.head.appendChild(script);
 }
 
-// 최초 상태 조회 콜백 함수
-function handleGetStatus(data) {
-  const currentStatus = data.status === true || data.status === "TRUE";
-  document.getElementById('message').innerHTML = currentStatus ?
-    `${room} 체크아웃 하시겠습니까?` :
-    `${room} 체크인 하시겠습니까?`;
+function handleGetStatus(data){
+  const status = data.status === true || data.status === "TRUE";
+  document.getElementById('title').innerText = status ? "체크아웃" : "체크인";
+  document.getElementById('message').innerText = status ?
+    `${room}에서 체크아웃 하시겠습니까?` :
+    `${room}에서 체크인 하시겠습니까?`;
 
-  document.getElementById('yesBtn').style.display = 'inline';
-  document.getElementById('noBtn').style.display = 'inline';
+  document.getElementById('yesBtn').style.display = 'block';
+  document.getElementById('noBtn').style.display = 'block';
 
-  document.getElementById('yesBtn').onclick = () => {
-    jsonp(`${apiUrl}?action=setStatus&room=${room}&status=${!currentStatus}`, 'handleSetStatus');
-    document.getElementById('message').innerHTML = currentStatus ? 
-      "이용해주셔서 감사합니다." : `${room} 체크인 완료`;
+  document.getElementById('yesBtn').innerText = status ? "체크아웃하기" : "체크인하기";
+
+  document.getElementById('yesBtn').onclick = ()=>{
+    jsonp(`${apiUrl}?action=setStatus&room=${room}&status=${!status}`, 'handleSetStatus');
+    document.getElementById('title').innerText = "감사합니다!";
+    document.getElementById('message').innerText = status ? "안전한 귀가 되세요." : `${room} 체크인이 완료되었습니다.`;
     document.getElementById('yesBtn').style.display = 'none';
     document.getElementById('noBtn').style.display = 'none';
-    setTimeout(()=>{ window.close(); }, 10000);
+    setTimeout(() => window.close(), 10000);
   };
 
-  document.getElementById('noBtn').onclick = () => {
-    window.close();
-  };
+  document.getElementById('noBtn').onclick = ()=> window.close();
 }
 
-// 상태 변경(체크인, 체크아웃) 콜백 함수
-function handleSetStatus(data) {
-  console.log('상태 변경 완료:', data);
+function handleSetStatus(data){
+  console.log("상태변경 성공:", data);
 }
 
-// 최초 상태 조회 실행
 jsonp(`${apiUrl}?action=getStatus&room=${room}`, 'handleGetStatus');
-
 </script>
 
 </body>
