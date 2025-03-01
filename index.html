@@ -24,7 +24,7 @@ h1 {
   font-size: 24px; font-weight: bold; margin-bottom: 15px;
 }
 p {
-  font-size: 16px; color: #6e6e73; margin-bottom: 25px;
+  font-size: 16px; color: #6e6e73; margin-bottom: 25px; white-space: pre-wrap;
 }
 button {
   padding: 15px; width: 100%; margin-top: 10px;
@@ -61,6 +61,15 @@ function jsonp(url, callback){
 
 function handleGetStatus(data){
   const status = data.status === true || data.status === "TRUE";
+  const lastActionTime = localStorage.getItem(`${room}-lastAction`);
+  const now = new Date().getTime();
+
+  if (lastActionTime && (now - lastActionTime) < 60*60*1000) { // 1시간 제한
+    document.getElementById('title').innerText = "잠시만 기다려주세요!";
+    document.getElementById('message').innerText = "최근에 이미 체크인(또는 체크아웃)을 완료했습니다.\n잠시 후 다시 시도해주세요.\n(1시간 제한)";
+    return;
+  }
+
   document.getElementById('title').innerText = status ? "체크아웃" : "체크인";
   document.getElementById('message').innerText = status ?
     `${room}에서 체크아웃 하시겠습니까?` :
@@ -76,6 +85,7 @@ function handleGetStatus(data){
     document.getElementById('message').innerText = "이 창은 자동으로 닫힙니다.";
     document.getElementById('yesBtn').style.display = 'none';
     document.getElementById('noBtn').style.display = 'none';
+    localStorage.setItem(`${room}-lastAction`, new Date().getTime());
     setTimeout(() => window.close(), 3000);
   };
 
