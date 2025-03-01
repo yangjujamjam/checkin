@@ -16,14 +16,19 @@
 
 <script>
 const params = new URLSearchParams(location.search);
-const room = params.get('room'); // URL에서 객실번호 가져오기
-const apiUrl = 'https://script.google.com/macros/s/AKfycbz2FFwxst1mbkevdmDX3C0fDBfGnyesd14XUC5KHVXgUCCQsVMthoatNtA9PBZg-_br/exec';
+const room = params.get('room'); 
+const apiUrl = 'https://script.google.com/macros/s/AKfycbyrDEZV5uDk8slrVQ_H2fLlcwFCzlWjsY-4DJpBLzl6p8jMFaN1EQrB4rSbmlaC3ysb/exec';
 
-// 상태 조회
-fetch(`${apiUrl}?action=getStatus&room=${room}`)
-.then(res => res.json())
-.then(data => {
-  const currentStatus = data.status === "TRUE";
+// JSONP 함수
+function jsonp(url, callbackName) {
+  const script = document.createElement('script');
+  script.src = url + '&callback=' + callbackName;
+  document.head.appendChild(script);
+}
+
+// 최초 상태 조회 콜백 함수
+function handleGetStatus(data) {
+  const currentStatus = data.status === true || data.status === "TRUE";
   document.getElementById('message').innerHTML = currentStatus ?
     `${room} 체크아웃 하시겠습니까?` :
     `${room} 체크인 하시겠습니까?`;
@@ -32,21 +37,27 @@ fetch(`${apiUrl}?action=getStatus&room=${room}`)
   document.getElementById('noBtn').style.display = 'inline';
 
   document.getElementById('yesBtn').onclick = () => {
-    fetch(`${apiUrl}?action=setStatus&room=${room}&status=${!currentStatus}`)
-    .then(res => res.json())
-    .then(() => {
-      document.getElementById('message').innerHTML = currentStatus ? 
-        "이용해주셔서 감사합니다." : `${room} 체크인 완료`;
-      document.getElementById('yesBtn').style.display = 'none';
-      document.getElementById('noBtn').style.display = 'none';
-      setTimeout(()=>{ window.close(); }, 10000);
-    });
+    jsonp(`${apiUrl}?action=setStatus&room=${room}&status=${!currentStatus}`, 'handleSetStatus');
+    document.getElementById('message').innerHTML = currentStatus ? 
+      "이용해주셔서 감사합니다." : `${room} 체크인 완료`;
+    document.getElementById('yesBtn').style.display = 'none';
+    document.getElementById('noBtn').style.display = 'none';
+    setTimeout(()=>{ window.close(); }, 10000);
   };
 
   document.getElementById('noBtn').onclick = () => {
     window.close();
   };
-});
+}
+
+// 상태 변경(체크인, 체크아웃) 콜백 함수
+function handleSetStatus(data) {
+  console.log('상태 변경 완료:', data);
+}
+
+// 최초 상태 조회 실행
+jsonp(`${apiUrl}?action=getStatus&room=${room}`, 'handleGetStatus');
+
 </script>
 
 </body>
