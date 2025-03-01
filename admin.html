@@ -12,42 +12,26 @@ body {
   background-color: #f4f6f9;
   text-align: center;
 }
-h2 {
-  margin-top: 30px;
-  margin-bottom: 15px;
-  font-size: 1.5rem;
-  color: #333;
-}
+h2 { margin: 20px; color: #333; }
 .container {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
 }
 .room {
-  width: 120px;
-  height: 80px;
-  margin: 8px;
-  line-height: 80px;
-  font-size: 0.9rem;
-  font-weight: bold;
-  color: #fff;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: transform 0.2s ease;
+  width: 120px; height: 80px;
+  margin: 8px; line-height: 80px;
+  font-size: 0.9rem; font-weight: bold;
+  color: #fff; border-radius: 8px;
+  cursor: pointer; transition: transform 0.2s ease;
 }
-.room:hover {
-  transform: scale(1.05);
-}
+.room:hover { transform: scale(1.05); }
 .red { background-color: #f44336; }
 .green { background-color: #4caf50; }
+.yellow { background-color: #ffc107; color:#000; }
 
 @media(max-width:600px){
-  .room {
-    width: 45%;
-    height: 60px;
-    line-height: 60px;
-    font-size: 0.8rem;
-  }
+  .room { width: 45%; height: 60px; line-height: 60px; font-size: 0.8rem; }
 }
 </style>
 </head>
@@ -55,14 +39,11 @@ h2 {
 
 <h2>🚍 카라반 (1~12)</h2>
 <div id="caravanContainer" class="container"></div>
-
 <h2>🏡 복층 우드캐빈 (1~6)</h2>
 <div id="woodContainer" class="container"></div>
 
 <script>
 const apiUrl = 'https://script.google.com/macros/s/AKfycbyrDEZV5uDk8slrVQ_H2fLlcwFCzlWjsY-4DJpBLzl6p8jMFaN1EQrB4rSbmlaC3ysb/exec';
-
-// 객실 배열을 정확히 순서대로 정의
 const caravanRooms = ["카라반1","카라반2","카라반3","카라반4","카라반5","카라반6","카라반7","카라반8","카라반9","카라반10","카라반11","카라반12"];
 const woodRooms = ["우드캐빈1","우드캐빈2","우드캐빈3","우드캐빈4","우드캐빈5","우드캐빈6"];
 
@@ -72,63 +53,65 @@ function jsonp(url, callback){
   document.head.appendChild(script);
 }
 
+let statuses = {};
+let loadedCount = 0;
+
 function createRoomDiv(data){
+  let className = '';
+  let text = data.room;
+
+  if(data.status === "TRUE" && data.cleaned === "FALSE"){
+    className = 'yellow';
+    text += " : 청소필요";
+  } else if(data.status === "TRUE"){
+    className = 'red';
+  } else {
+    className = 'green';
+  }
+
   const div = document.createElement('div');
-  div.className = 'room ' + (data.status === true || data.status === "TRUE" ? 'red':'green');
-  div.innerText = data.room;
+  div.className = 'room ' + className;
+  div.innerText = text;
+
   div.onclick = ()=>{
-    if(confirm(div.classList.contains('red') ? "퇴실처리할까요?" : "입실처리할까요?")){
-      jsonp(`${apiUrl}?action=setStatus&room=${data.room}&status=${!data.status}`, 'handleSetStatus');
+    if(className === 'yellow'){
+      if(confirm("청소를 완료했습니까?")){
+        jsonp(`${apiUrl}?action=setCleaned&room=${data.room}`, 'handleSetStatus');
+      }
+    } else {
+      if(confirm(className === 'red' ? "퇴실처리할까요?" : "입실처리할까요?")){
+        jsonp(`${apiUrl}?action=setStatus&room=${data.room}&status=${!(data.status==="TRUE")}`, 'handleSetStatus');
+      }
     }
   };
   return div;
 }
 
-let caravanStatuses = {};
-let woodStatuses = {};
-let loadedCount = 0;
-
-function handleCaravanStatus(data){
-  caravanStatuses[data.room] = data;
-  checkLoaded();
-}
-
-function handleWoodStatus(data){
-  woodStatuses[data.room] = data;
-  checkLoaded();
+function handleRoomStatus(data){
+  statuses[data.room] = data;
+  loadedCount++;
+  if(loadedCount === caravanRooms.length + woodRooms.length) renderRooms();
 }
 
 function handleSetStatus(data){
-  alert('상태 변경 완료!');
+  alert('상태가 변경되었습니다!');
   location.reload();
-}
-
-function checkLoaded(){
-  loadedCount++;
-  if(loadedCount === (caravanRooms.length + woodRooms.length)){
-    renderRooms();
-  }
 }
 
 function renderRooms(){
   caravanRooms.forEach(room => {
-    const data = caravanStatuses[room];
-    const div = createRoomDiv(data);
+    const div = createRoomDiv(statuses[room]);
     document.getElementById('caravanContainer').appendChild(div);
   });
   woodRooms.forEach(room => {
-    const data = woodStatuses[room];
-    const div = createRoomDiv(data);
+    const div = createRoomDiv(statuses[room]);
     document.getElementById('woodContainer').appendChild(div);
   });
 }
 
-// 객실 상태 가져오기
-caravanRooms.forEach(room=>{
-  jsonp(`${apiUrl}?action=getStatus&room=${room}`,'handleCaravanStatus');
-});
-woodRooms.forEach(room=>{
-  jsonp(`${apiUrl}?action=getStatus&room=${room}`,'handleWoodStatus');
+// 상태 조회 호출
+[...caravanRooms, ...woodRooms].forEach(room=>{
+  jsonp(`${apiUrl}?action=getStatus&room=${room}`,'handleRoomStatus');
 });
 </script>
 
