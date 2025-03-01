@@ -61,6 +61,8 @@ h2 {
 
 <script>
 const apiUrl = 'https://script.google.com/macros/s/AKfycbyrDEZV5uDk8slrVQ_H2fLlcwFCzlWjsY-4DJpBLzl6p8jMFaN1EQrB4rSbmlaC3ysb/exec';
+
+// 객실 배열을 정확히 순서대로 정의
 const caravanRooms = ["카라반1","카라반2","카라반3","카라반4","카라반5","카라반6","카라반7","카라반8","카라반9","카라반10","카라반11","카라반12"];
 const woodRooms = ["우드캐빈1","우드캐빈2","우드캐빈3","우드캐빈4","우드캐빈5","우드캐빈6"];
 
@@ -82,19 +84,43 @@ function createRoomDiv(data){
   return div;
 }
 
+let caravanStatuses = {};
+let woodStatuses = {};
+let loadedCount = 0;
+
 function handleCaravanStatus(data){
-  const div = createRoomDiv(data);
-  document.getElementById('caravanContainer').appendChild(div);
+  caravanStatuses[data.room] = data;
+  checkLoaded();
 }
 
 function handleWoodStatus(data){
-  const div = createRoomDiv(data);
-  document.getElementById('woodContainer').appendChild(div);
+  woodStatuses[data.room] = data;
+  checkLoaded();
 }
 
 function handleSetStatus(data){
   alert('상태 변경 완료!');
   location.reload();
+}
+
+function checkLoaded(){
+  loadedCount++;
+  if(loadedCount === (caravanRooms.length + woodRooms.length)){
+    renderRooms();
+  }
+}
+
+function renderRooms(){
+  caravanRooms.forEach(room => {
+    const data = caravanStatuses[room];
+    const div = createRoomDiv(data);
+    document.getElementById('caravanContainer').appendChild(div);
+  });
+  woodRooms.forEach(room => {
+    const data = woodStatuses[room];
+    const div = createRoomDiv(data);
+    document.getElementById('woodContainer').appendChild(div);
+  });
 }
 
 // 객실 상태 가져오기
