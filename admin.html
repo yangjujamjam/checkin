@@ -56,16 +56,23 @@ function jsonp(url, callback){
 let statuses = {};
 let loadedCount = 0;
 
+function toBool(val){
+  return val === true || val === 'TRUE';
+}
+
 function createRoomDiv(data){
+  let isOccupied = toBool(data.status);
+  let isCleaned = toBool(data.cleaned);
+  
   let className = '';
   let text = data.room;
 
-  if(data.status === "FALSE" && data.cleaned === "FALSE"){
+  if(!isOccupied && !isCleaned){ // 퇴실 후 청소필요
     className = 'yellow';
     text += " : 청소필요";
-  } else if(data.status === "TRUE"){
+  } else if(isOccupied){ // 입실 상태
     className = 'red';
-  } else {
+  } else { // 빈 객실 (청소완료)
     className = 'green';
   }
 
@@ -80,7 +87,7 @@ function createRoomDiv(data){
       }
     } else {
       if(confirm(className === 'red' ? "퇴실처리할까요?" : "입실처리할까요?")){
-        jsonp(`${apiUrl}?action=setStatus&room=${data.room}&status=${!(data.status==="TRUE")}`, 'handleSetStatus');
+        jsonp(`${apiUrl}?action=setStatus&room=${data.room}&status=${!isOccupied}`, 'handleSetStatus');
       }
     }
   };
@@ -95,13 +102,13 @@ function handleRoomStatus(data){
 
 function handleSetStatus(data){
   alert('상태가 변경되었습니다!');
-  setTimeout(() => location.reload(), 500); // ← 바로 새로고침 추가
+  setTimeout(() => location.reload(), 500);
 }
 
 function renderRooms(){
   document.getElementById('caravanContainer').innerHTML = '';
   document.getElementById('woodContainer').innerHTML = '';
-  
+
   caravanRooms.forEach(room => {
     const div = createRoomDiv(statuses[room]);
     document.getElementById('caravanContainer').appendChild(div);
