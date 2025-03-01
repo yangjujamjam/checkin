@@ -14,27 +14,42 @@
 
 <script>
 const rooms = ["카라반1","카라반2","카라반3","카라반4","카라반5","카라반6","카라반7","카라반8","카라반9","카라반10","카라반11","카라반12","우드캐빈1","우드캐빈2","우드캐빈3","우드캐빈4","우드캐빈5","우드캐빈6"];
-const apiUrl = 'https://script.google.com/macros/s/AKfycbz2FFwxst1mbkevdmDX3C0fDBfGnyesd14XUC5KHVXgUCCQsVMthoatNtA9PBZg-_br/exec';
+const apiUrl = 'https://script.google.com/macros/s/AKfycbyrDEZV5uDk8slrVQ_H2fLlcwFCzlWjsY-4DJpBLzl6p8jMFaN1EQrB4rSbmlaC3ysb/exec';
 
-function loadStatus(room){
-  fetch(`${apiUrl}?action=getStatus&room=${room}`)
-  .then(res=>res.json())
-  .then(data=>{
-    const status = data.status==="TRUE";
-    const div = document.createElement('div');
-    div.className = 'room ' + (status?'red':'green');
-    div.innerText = room;
-    div.onclick=()=>{
-      if(confirm(status?"퇴실처리 하겠습니까?":"입실처리 하겠습니까?")){
-        fetch(`${apiUrl}?action=setStatus&room=${room}&status=${!status}`)
-        .then(()=>{alert(status?"퇴실처리 되었습니다":"입실처리 되었습니다");location.reload();});
-      }
-    };
-    document.getElementById('rooms').appendChild(div);
-  });
+// JSONP 함수
+function jsonp(url, callbackName) {
+  const script = document.createElement('script');
+  script.src = url + '&callback=' + callbackName;
+  document.head.appendChild(script);
 }
 
-rooms.forEach(loadStatus);
+// 객실 상태 조회 후 처리 콜백 함수
+function handleGetStatus(data) {
+  const status = data.status === true || data.status === "TRUE";
+  const room = data.room;
+  const div = document.createElement('div');
+  div.className = 'room ' + (status ? 'red' : 'green');
+  div.innerText = room;
+
+  div.onclick = () => {
+    if(confirm(status ? "퇴실처리 하겠습니까?" : "입실처리 하겠습니까?")){
+      jsonp(`${apiUrl}?action=setStatus&room=${room}&status=${!status}`, 'handleSetStatus');
+    }
+  };
+
+  document.getElementById('rooms').appendChild(div);
+}
+
+// 상태 변경 후 처리 콜백 함수
+function handleSetStatus(data) {
+  alert(data.success ? "상태가 성공적으로 변경되었습니다." : "상태 변경 실패!");
+  location.reload();
+}
+
+// 모든 객실 상태 조회 실행
+rooms.forEach(room => {
+  jsonp(`${apiUrl}?action=getStatus&room=${room}`, 'handleGetStatus');
+});
 </script>
 </body>
 </html>
