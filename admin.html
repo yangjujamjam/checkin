@@ -20,18 +20,26 @@ h2 { margin: 20px; color: #333; }
 }
 .room {
   width: 120px; height: 80px;
-  margin: 8px; line-height: 80px;
+  margin: 8px; 
   font-size: 0.9rem; font-weight: bold;
   color: #fff; border-radius: 8px;
   cursor: pointer; transition: transform 0.2s ease;
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
 }
 .room:hover { transform: scale(1.05); }
+.status {
+  font-size: 0.8rem;
+  font-weight: normal;
+  margin-top: 4px;
+}
 .red { background-color: #f44336; }
 .green { background-color: #4caf50; }
 .yellow { background-color: #ffc107; color:#000; }
 
 @media(max-width:600px){
-  .room { width: 45%; height: 60px; line-height: 60px; font-size: 0.8rem; }
+  .room { width: 45%; height: 60px; font-size: 0.8rem; }
+  .status { font-size: 0.7rem; }
 }
 </style>
 </head>
@@ -65,20 +73,22 @@ function createRoomDiv(data){
   let isCleaned = toBool(data.cleaned);
   
   let className = '';
-  let text = data.room;
+  let statusText = '';
 
   if(!isOccupied && !isCleaned){ // 퇴실 후 청소필요
     className = 'yellow';
-    text += " : 청소필요";
+    statusText = "청소필요";
   } else if(isOccupied){ // 입실 상태
     className = 'red';
+    statusText = "입실 중";
   } else { // 빈 객실 (청소완료)
     className = 'green';
+    statusText = "입실가능";
   }
 
   const div = document.createElement('div');
   div.className = 'room ' + className;
-  div.innerText = text;
+  div.innerHTML = `<div>${data.room}</div><div class='status'>${statusText}</div>`;
 
   div.onclick = ()=>{
     if(className === 'yellow'){
